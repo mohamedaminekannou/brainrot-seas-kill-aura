@@ -1,0 +1,362 @@
+-- Brainrot Seas Aura Hack Simulation
+-- Test script for anti-cheat detection
+-- Execute with Codex/Synapse/Krnl
+
+-- Load required services
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+-- Exploit check
+if not iswindowactive or not getconnections then
+    warn("Not running in exploit environment")
+    return
+end
+
+-- Player variables
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+-- Aura settings
+local AuraEnabled = false
+local AuraRange = 50
+local AuraDamage = 1000
+local KillAllNPCs = true
+local AffectPlayers = false
+local VisualEffects = true
+
+-- Fake remote names (common in exploits)
+local FakeRemotes = {
+    "AuraRemote",
+    "DamageAll",
+    "KillNPCs",
+    "BrainrotHack",
+    "SeasExploit"
+}
+
+-- Create fake GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BrainrotAuraHack"
+ScreenGui.Parent = game.CoreGui or LocalPlayer:WaitForChild("PlayerGui")
+
+-- Main frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 300, 0, 400)
+MainFrame.Position = UDim2.new(0, 10, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Text = "BRAINROT SEAS AURA HACK"
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+Title.TextColor3 = Color3.white
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.Parent = MainFrame
+
+-- Aura toggle button
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0.8, 0, 0, 50)
+ToggleButton.Position = UDim2.new(0.1, 0, 0.15, 0)
+ToggleButton.Text = "AURA: OFF"
+ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+ToggleButton.TextColor3 = Color3.white
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.TextSize = 16
+ToggleButton.Parent = MainFrame
+
+-- Range slider
+local RangeSlider = Instance.new("TextBox")
+RangeSlider.Size = UDim2.new(0.8, 0, 0, 30)
+RangeSlider.Position = UDim2.new(0.1, 0, 0.35, 0)
+RangeSlider.Text = "Range: " .. AuraRange
+RangeSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+RangeSlider.TextColor3 = Color3.white
+RangeSlider.Parent = MainFrame
+
+-- Damage slider
+local DamageSlider = Instance.new("TextBox")
+DamageSlider.Size = UDim2.new(0.8, 0, 0, 30)
+DamageSlider.Position = UDim2.new(0.1, 0, 0.45, 0)
+DamageSlider.Text = "Damage: " .. AuraDamage
+DamageSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+DamageSlider.TextColor3 = Color3.white
+DamageSlider.Parent = MainFrame
+
+-- NPC kill toggle
+local NPCToggle = Instance.new("TextButton")
+NPCToggle.Size = UDim2.new(0.8, 0, 0, 30)
+NPCToggle.Position = UDim2.new(0.1, 0, 0.55, 0)
+NPCToggle.Text = "Kill NPCs: ON"
+NPCToggle.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+NPCToggle.TextColor3 = Color3.white
+NPCToggle.Parent = MainFrame
+
+-- Visual effects toggle
+local VisualToggle = Instance.new("TextButton")
+VisualToggle.Size = UDim2.new(0.8, 0, 0, 30)
+VisualToggle.Position = UDim2.new(0.1, 0, 0.65, 0)
+VisualToggle.Text = "Visuals: ON"
+VisualToggle.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+VisualToggle.TextColor3 = Color3.white
+VisualToggle.Parent = MainFrame
+
+-- Status label
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(0.8, 0, 0, 40)
+StatusLabel.Position = UDim2.new(0.1, 0, 0.8, 0)
+StatusLabel.Text = "Waiting..."
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.TextColor3 = Color3.white
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.TextSize = 14
+StatusLabel.Parent = MainFrame
+
+-- Aura effect (visual)
+local AuraEffect
+if VisualEffects then
+    AuraEffect = Instance.new("Part")
+    AuraEffect.Shape = Enum.PartType.Ball
+    AuraEffect.Size = Vector3.new(AuraRange * 2, AuraRange * 2, AuraRange * 2)
+    AuraEffect.Transparency = 0.7
+    AuraEffect.Color = Color3.fromRGB(255, 0, 0)
+    AuraEffect.Material = Enum.Material.Neon
+    AuraEffect.Anchored = true
+    AuraEffect.CanCollide = false
+    AuraEffect.Parent = Workspace
+end
+
+-- Function to kill NPCs
+local function killNPCs()
+    if not AuraEnabled then return end
+    
+    local kills = 0
+    for _, npc in pairs(Workspace:GetChildren()) do
+        if npc:IsA("Model") and npc ~= Character then
+            local humanoid = npc:FindFirstChild("Humanoid")
+            local head = npc:FindFirstChild("Head")
+            
+            if humanoid and head then
+                local distance = (HumanoidRootPart.Position - head.Position).Magnitude
+                
+                if distance <= AuraRange then
+                    -- Multiple damage methods (common in exploits)
+                    if humanoid.Health > 0 then
+                        humanoid.Health = 0
+                        kills = kills + 1
+                        
+                        -- Create fake remote call signature
+                        pcall(function()
+                            game:GetService("ReplicatedStorage"):FindFirstChild("DamageRemote"):FireServer(npc, AuraDamage)
+                        end)
+                        
+                        -- Visual effect
+                        if VisualEffects then
+                            local explosion = Instance.new("Explosion")
+                            explosion.Position = head.Position
+                            explosion.BlastRadius = 5
+                            explosion.BlastPressure = 0
+                            explosion.Parent = Workspace
+                            
+                            game:GetService("Debris"):AddItem(explosion, 0.5)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    if kills > 0 then
+        StatusLabel.Text = "Killed " .. kills .. " NPCs"
+    end
+end
+
+-- Function to affect players
+local function affectPlayers()
+    if not AuraEnabled or not AffectPlayers then return end
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local char = player.Character
+            if char then
+                local humanoid = char:FindFirstChild("Humanoid")
+                local root = char:FindFirstChild("HumanoidRootPart")
+                
+                if humanoid and root then
+                    local distance = (HumanoidRootPart.Position - root.Position).Magnitude
+                    
+                    if distance <= AuraRange then
+                        -- Simulate lag switch detection bypass
+                        humanoid:TakeDamage(AuraDamage * 0.1)
+                        
+                        StatusLabel.Text = "Damaging players..."
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Toggle button functionality
+ToggleButton.MouseButton1Click:Connect(function()
+    AuraEnabled = not AuraEnabled
+    
+    if AuraEnabled then
+        ToggleButton.Text = "AURA: ON"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        
+        if AuraEffect then
+            AuraEffect.Color = Color3.fromRGB(0, 255, 0)
+            AuraEffect.Parent = HumanoidRootPart
+        end
+        
+        StatusLabel.Text = "AURA ACTIVATED"
+        
+        -- Create fake remotes (common exploit technique)
+        for _, remoteName in pairs(FakeRemotes) do
+            local fakeRemote = Instance.new("RemoteEvent")
+            fakeRemote.Name = remoteName
+            fakeRemote.Parent = game:GetService("ReplicatedStorage")
+            
+            game:GetService("Debris"):AddItem(fakeRemote, 5)
+        end
+        
+    else
+        ToggleButton.Text = "AURA: OFF"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        
+        if AuraEffect then
+            AuraEffect.Color = Color3.fromRGB(255, 0, 0)
+            AuraEffect.Parent = nil
+        end
+        
+        StatusLabel.Text = "AURA DEACTIVATED"
+    end
+end)
+
+-- Range slider functionality
+RangeSlider.FocusLost:Connect(function()
+    local newRange = tonumber(RangeSlider.Text:match("%d+"))
+    if newRange and newRange > 0 and newRange < 1000 then
+        AuraRange = newRange
+        RangeSlider.Text = "Range: " .. AuraRange
+        
+        if AuraEffect then
+            AuraEffect.Size = Vector3.new(AuraRange * 2, AuraRange * 2, AuraRange * 2)
+        end
+    end
+end)
+
+-- Damage slider functionality
+DamageSlider.FocusLost:Connect(function()
+    local newDamage = tonumber(DamageSlider.Text:match("%d+"))
+    if newDamage and newDamage > 0 then
+        AuraDamage = newDamage
+        DamageSlider.Text = "Damage: " .. AuraDamage
+    end
+end)
+
+-- NPC toggle functionality
+NPCToggle.MouseButton1Click:Connect(function()
+    KillAllNPCs = not KillAllNPCs
+    NPCToggle.Text = "Kill NPCs: " .. (KillAllNPCs and "ON" or "OFF")
+    NPCToggle.BackgroundColor3 = KillAllNPCs and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+end)
+
+-- Visual toggle functionality
+VisualToggle.MouseButton1Click:Connect(function()
+    VisualEffects = not VisualEffects
+    VisualToggle.Text = "Visuals: " .. (VisualEffects and "ON" or "OFF")
+    VisualToggle.BackgroundColor3 = VisualEffects and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    
+    if AuraEffect then
+        AuraEffect.Parent = VisualEffects and Workspace or nil
+    end
+end)
+
+-- Keybind (common in exploits)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        if input.KeyCode == Enum.KeyCode.RightShift then
+            AuraEnabled = not AuraEnabled
+            ToggleButton.Text = AuraEnabled and "AURA: ON" or "AURA: OFF"
+            ToggleButton.BackgroundColor3 = AuraEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        end
+    end
+end)
+
+-- Main loop (exploit-like behavior)
+local RunConnection
+RunConnection = RunService.Heartbeat:Connect(function()
+    if AuraEnabled then
+        -- Update aura effect position
+        if AuraEffect and Character then
+            AuraEffect.Position = HumanoidRootPart.Position
+        end
+        
+        -- Execute aura functions
+        if KillAllNPCs then
+            killNPCs()
+        end
+        
+        if AffectPlayers then
+            affectPlayers()
+        end
+        
+        -- Simulate speed hack (common exploit)
+        if Character and Character:FindFirstChild("Humanoid") then
+            Character.Humanoid.WalkSpeed = 32
+        end
+    end
+end)
+
+-- Fake "anti-detection" (common in real exploits)
+local function fakeAntiDetect()
+    -- Simulate bypass techniques
+    pcall(function()
+        -- Fake environment
+        getfenv().script = nil
+        getfenv().Instance = nil
+        
+        -- Random delays to avoid pattern detection
+        wait(math.random(0.1, 0.5))
+    end)
+end
+
+-- Cleanup on leave
+LocalPlayer.CharacterRemoving:Connect(function()
+    if RunConnection then
+        RunConnection:Disconnect()
+    end
+    
+    if AuraEffect then
+        AuraEffect:Destroy()
+    end
+    
+    if ScreenGui then
+        ScreenGui:Destroy()
+    end
+end)
+
+-- Initialization message
+print("=================================")
+print("Brainrot Seas Aura Hack Loaded")
+print("Developer Test Build")
+print("Game: Brainrot Seas")
+print("Executor: CodeX/Synapse")
+print("=================================")
+StatusLabel.Text = "HACK LOADED SUCCESSFULLY"
+
+-- Run anti-detect every 30 seconds
+while true do
+    wait(30)
+    fakeAntiDetect()
+end
